@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>INST377 - Activities</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/annyang/2.6.1/annyang.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #fff5e6;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+
+    header {
+      background-color: #990000;
+      color: white;
+      padding: 20px;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    nav {
+      background-color: #cc6666;
+      padding: 10px;
+    }
+
+    nav a {
+      color: #000;
+      margin: 0 10px;
+      text-decoration: none;
+    }
+
+    nav a:hover {
+      color: white;
+    }
+
+    .buttons {
+      margin: 20px;
+    }
+
+    .buttons button {
+      background-color: #cc0033;
+      color: white;
+      padding: 10px 20px;
+      margin: 0 10px;
+      font-size: 16px;
+      border: none;
+      box-shadow: 2px 2px #888;
+      cursor: pointer;
+    }
+
+    .quote-box {
+      background-color: #eee;
+      margin: 20px auto;
+      width: 60%;
+      padding: 15px;
+      font-style: italic;
+    }
+
+    .audio-box {
+      background-color: darkgreen;
+      color: white;
+      padding: 20px;
+      margin: 20px auto;
+      width: 70%;
+      text-align: left;
+      border-radius: 10px;
+    }
+
+    .audio-box button {
+      background-color: white;
+      color: black;
+      padding: 10px 20px;
+      margin: 10px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    h2 {
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+  <header>INST377 - Activities</header>
+
+  <nav>
+    <a href="home.html">Home</a>
+    <a href="stocks.html">Stocks</a>
+    <a href="dogs.html">Dogs</a>
+  </nav>
+
+  <h2>These are some different activities we can try!</h2>
+
+  <div class="buttons">
+    <button onclick="location.href='stocks.html'">Stocks</button>
+    <button onclick="location.href='dogs.html'">Dogs</button>
+  </div>
+
+  <div class="quote-box" id="quote">Loading quote...</div>
+
+  <div class="audio-box">
+    <h3>In this web page there are options to Navigate using Audio!</h3>
+    <p><strong>Navigate:</strong> Say "Navigate to home", "Navigate to stocks", or "Navigate to dogs"</p>
+    <p><strong>Change color:</strong> Say "Change the color to red", "blue", or "green"</p>
+    <p><strong>Hello:</strong> Say "Hello" to see a welcome message</p>
+
+    <button onclick="startListening()">Turn On Listening</button>
+    <button onclick="stopListening()">Turn Off Listening</button>
+  </div>
+
+  <script>
+    function loadQuote() {
+      const url = 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://zenquotes.io/api/quotes/');
+      fetch(url)
+        .then(response => {
+          if (!response.ok) throw new Error('Quote API failed');
+          return response.json();
+        })
+        .then(data => {
+          const quotes = JSON.parse(data.contents);
+          if (Array.isArray(quotes) && quotes.length > 0) {
+            const random = Math.floor(Math.random() * quotes.length);
+            const quote = quotes[random];
+            document.getElementById('quote').innerHTML = `"${quote.q}"<br>— ${quote.a}`;
+          } else {
+            throw new Error('Invalid quote data');
+          }
+        })
+        .catch(error => {
+          console.warn('Using fallback quote due to error:', error.message);
+          document.getElementById('quote').innerHTML =
+            `"Every artist dips his brush in his own soul, and paints his own nature into his pictures."<br>— Henry Ward Beecher`;
+        });
+    }
+
+    window.onload = function () {
+      loadQuote();
+    };
+
+    function startListening() {
+      if (annyang) {
+        const commands = {
+          'hello': () => alert('Hello back to you!'),
+          'change the color to *color': color => {
+            document.body.style.backgroundColor = color;
+          },
+          'navigate to *page': page => {
+            const p = page.toLowerCase();
+            if (p === 'home') location.href = 'home.html';
+            else if (p === 'stocks') location.href = 'stocks.html';
+            else if (p === 'dogs') location.href = 'dogs.html';
+            else alert(`Sorry, I don't know the page "${page}"`);
+          }
+        };
+
+        annyang.removeCommands();
+        annyang.addCommands(commands);
+        annyang.start({ autoRestart: false, continuous: false });
+      } else {
+        alert("Annyang is not supported in this browser.");
+      }
+    }
+
+    function stopListening() {
+      if (annyang) {
+        annyang.abort();
+      }
+    }
+  </script>
+</body>
+</html>
