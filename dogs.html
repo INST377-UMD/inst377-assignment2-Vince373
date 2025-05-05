@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>INST377 - Doggos</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/annyang/2.6.1/annyang.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #fde6c3;
+      margin: 0;
+    }
+
+    header {
+      background-color: #800000;
+      color: white;
+      text-align: center;
+      padding: 20px 10px 10px 10px;
+    }
+
+    nav {
+      background-color: #cc6666;
+      text-align: center;
+      padding: 8px 0;
+    }
+
+    nav a {
+      margin: 0 15px;
+      color: #3b0000;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    h2 {
+      text-align: center;
+    }
+
+    .carousel-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      max-width: 600px;
+      margin: 20px auto;
+    }
+
+    .carousel-image {
+      width: 100%;
+      border-radius: 10px;
+    }
+
+    .arrow {
+      position: absolute;
+      top: 50%;
+      font-size: 30px;
+      cursor: pointer;
+      color: blue;
+      background-color: rgba(255,255,255,0.7);
+      border-radius: 50%;
+      padding: 5px 10px;
+      user-select: none;
+    }
+
+    .arrow-left {
+      left: -40px;
+    }
+
+    .arrow-right {
+      right: -40px;
+    }
+
+    .breed-buttons {
+      text-align: center;
+      margin: 10px;
+      flex-wrap: wrap;
+    }
+
+    .breed-buttons button {
+      background-color: #8b0000;
+      color: white;
+      border: none;
+      margin: 5px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .breed-buttons button:hover {
+      background-color: #b22222;
+    }
+
+    .breed-info {
+      background-color: lightblue;
+      border: 2px solid black;
+      margin: 20px;
+      padding: 20px;
+    }
+
+    .breed-info img {
+      width: 250px;
+      border-radius: 10px;
+      float: left;
+      margin-right: 20px;
+    }
+
+    .footer {
+      background-color: green;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .footer button {
+      margin: 10px;
+      padding: 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>INST377 - Doggos</h1>
+  </header>
+  <nav>
+    <a href="home.html" id="homeLink">Home</a>
+    <a href="stocks.html" id="stocksLink">Stocks</a>
+    <a href="dogs.html" id="dogsLink">Dogs</a>
+  </nav>
+
+  <h2>Doggos! 🐶</h2>
+
+  <div class="carousel-container">
+    <span class="arrow arrow-left" onclick="prevImage()">←</span>
+    <img id="carousel" class="carousel-image" src="" alt="Dog Image" />
+    <span class="arrow arrow-right" onclick="nextImage()">→</span>
+  </div>
+
+  <div class="breed-buttons" id="breedButtons"></div>
+
+  <div class="breed-info" id="breedInfo"></div>
+
+  <div class="footer">
+    <p>In this web page there are options to Navigate using Audio!</p>
+    <ul style="list-style-type: none; padding-left: 0;">
+      <li><strong>Load Dog Breed</strong><br><em>Say: Load dog breed husky</em></li>
+      <li><strong>Navigate to a Page</strong><br><em>Say: Navigate to home, stocks, or dogs</em></li>
+      <li><strong>Change Page Color</strong><br><em>Say: Change the color to red, blue, or green</em></li>
+      <li><strong>Say Hello</strong><br><em>Say: Hello</em></li>
+    </ul>
+    <button onclick="startListening()">Turn On Listening</button>
+    <button onclick="stopListening()">Turn Off Listening</button>
+  </div>
+
+  <script>
+    let dogImages = [];
+    let currentImage = 0;
+
+    async function fetchCarouselImages() {
+      const res = await fetch("https://dog.ceo/api/breeds/image/random/10");
+      const data = await res.json();
+      dogImages = data.message;
+      document.getElementById("carousel").src = dogImages[0];
+    }
+
+    function nextImage() {
+      currentImage = (currentImage + 1) % dogImages.length;
+      document.getElementById("carousel").src = dogImages[currentImage];
+    }
+
+    function prevImage() {
+      currentImage = (currentImage - 1 + dogImages.length) % dogImages.length;
+      document.getElementById("carousel").src = dogImages[currentImage];
+    }
+
+    async function loadBreeds() {
+      const res = await fetch('https://api.thedogapi.com/v1/breeds');
+      const breeds = await res.json();
+      const buttonsContainer = document.getElementById("breedButtons");
+
+      const shuffled = breeds.sort(() => 0.5 - Math.random()).slice(0, 10);
+      shuffled.forEach(breed => {
+        const button = document.createElement("button");
+        button.innerText = breed.name;
+        button.onclick = () => showBreedInfo(breed);
+        buttonsContainer.appendChild(button);
+      });
+    }
+
+    function showBreedInfo(breed) {
+      const container = document.getElementById("breedInfo");
+      const lifeSpan = breed.life_span.split(" - ");
+      container.innerHTML = `
+        <img src="${breed.image?.url || ''}" />
+        <h3>Name: ${breed.name}</h3>
+        <p><strong>Description:</strong> ${breed.temperament || 'N/A'}</p>
+        <p><strong>Min Life:</strong> ${lifeSpan[0] || '?'} years</p>
+        <p><strong>Max Life:</strong> ${lifeSpan[1] || lifeSpan[0] || '?'} years</p>
+      `;
+    }
+
+    function startListening() {
+      if (annyang) {
+        const commands = {
+          'load dog breed *breed': function(breedName) {
+            fetch('https://api.thedogapi.com/v1/breeds')
+              .then(res => res.json())
+              .then(breeds => {
+                const match = breeds.find(b => b.name.toLowerCase() === breedName.toLowerCase());
+                if (match) showBreedInfo(match);
+                else alert('Breed not found.');
+              });
+          },
+          'change the color to *color': function(color) {
+            const validColors = ['red', 'blue', 'green'];
+            const cleaned = color.trim().toLowerCase();
+            if (validColors.includes(cleaned)) {
+              document.body.style.backgroundColor = cleaned;
+            } else {
+              alert('Unsupported color.');
+            }
+          },
+          'navigate to *page': function(page) {
+            const cleaned = page.trim().toLowerCase();
+            if (cleaned === 'home') window.location.href = 'home.html';
+            else if (cleaned === 'stocks') window.location.href = 'stocks.html';
+            else if (cleaned === 'dogs') window.location.href = 'dogs.html';
+            else alert('Page not recognized.');
+          },
+          'hello': function() {
+            alert('Hello back to you!');
+          }
+        };
+
+        annyang.removeCommands();
+        annyang.addCommands(commands);
+        annyang.setLanguage('en-US');
+        annyang.start({ autoRestart: true, continuous: false });
+        console.log("Voice recognition started.");
+      }
+    }
+
+    function stopListening() {
+      if (annyang) annyang.abort();
+    }
+
+    fetchCarouselImages();
+    loadBreeds();
+  </script>
+</body>
+</html>
